@@ -9,7 +9,7 @@ function generateTaskId() {
 
 // Function to create a task card
 function createTaskCard(task) {
-  return `
+  const card = `
     <div class="card task-card mb-3" id="task-${task.id}" data-id="${task.id}">
       <div class="card-body">
         <h5 class="card-title">${task.title}</h5>
@@ -19,29 +19,45 @@ function createTaskCard(task) {
       </div>
     </div>
   `;
+  console.log("Creating task card:", card);
+  return card;
 }
 
 // Function to render the task list and make cards draggable
 function renderTaskList() {
+  console.log("Rendering task list");
   // Clear existing task lists
-  $("#todo-cards, #in-progress-cards, #done-cards").empty();
+  $("#todo-cards").empty();
+  $("#in-progress-cards").empty();
+  $("#done-cards").empty();
 
   taskList.forEach(task => {
+    console.log("Rendering task:", task);
     const taskCard = createTaskCard(task);
-    $(`#${task.status}-cards`).append(taskCard);
+    if (task.status === "to-do") {
+      $("#todo-cards").append(taskCard);
+    } else if (task.status === "in-progress") {
+      $("#in-progress-cards").append(taskCard);
+    } else if (task.status === "done") {
+      $("#done-cards").append(taskCard);
+    } else {
+      console.error("Unknown status for task:", task.status);
+    }
   });
 
   // Make task cards draggable
   $(".task-card").draggable({
-    containment: "body", // Prevent dragging outside the body
-    revert: "invalid", // Return to original position if not dropped on a valid droppable area
-    helper: "clone", // Create a clone to drag
-    zIndex: 100, // Ensure the dragged item is on top
-    start: function (event, ui) {
-      $(this).css("opacity", 0.5); // Reduce opacity while dragging
+    containment: "body",
+    revert: "invalid",
+    helper: "clone",
+    zIndex: 100,
+    start: function () {
+      console.log("Dragging started for:", $(this).data("id"));
+      $(this).css("opacity", 0.5);
     },
-    stop: function (event, ui) {
-      $(this).css("opacity", 1); // Reset opacity after dragging
+    stop: function () {
+      console.log("Dragging stopped for:", $(this).data("id"));
+      $(this).css("opacity", 1);
     }
   });
 }
@@ -65,6 +81,7 @@ function handleAddTask(event) {
     };
 
     taskList.push(newTask);
+    console.log("Added new task:", newTask);
     renderTaskList();
 
     // Save to localStorage
@@ -83,6 +100,7 @@ function handleAddTask(event) {
 // Function to handle deleting a task
 function handleDeleteTask(event) {
   const taskId = $(event.target).closest(".card").data("id");
+  console.log("Deleting task with ID:", taskId);
   taskList = taskList.filter(task => task.id !== taskId);
   renderTaskList();
 
@@ -97,6 +115,7 @@ function handleDrop(event, ui) {
 
   const task = taskList.find(task => task.id === taskId);
   if (task) {
+    console.log("Updating task status:", task);
     task.status = newStatus;
     renderTaskList(); // Re-render the task list to update the UI
 
@@ -117,14 +136,16 @@ $(document).ready(function () {
   $(document).on("click", ".delete-task", handleDeleteTask);
 
   // Make lanes droppable
-  $(".lane .card-body").droppable({
-    accept: ".task-card", // Only accept elements with the class "task-card"
+  $(".lane").droppable({
+    accept: ".task-card",
     drop: handleDrop,
-    hoverClass: "lane-hover" // Add a class to the lane on hover for visual feedback
+    hoverClass: "lane-hover"
   });
 
   // Make the due date field a date picker
   $("#taskDueDate").datepicker();
-}); 
+});
+
+
 
 
